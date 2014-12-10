@@ -6,7 +6,7 @@
     <ProjectGuid>{BFEDE5B3-92C8-48B4-887D-35DFA32E3E10}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ContinuousMemoryStream.Tests</RootNamespace>
+    <RootNamespace>JBe.IO.Tests</RootNamespace>
     <AssemblyName>ContinuousMemoryStream.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -56,7 +56,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="ContinuousMemoryStreamTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
