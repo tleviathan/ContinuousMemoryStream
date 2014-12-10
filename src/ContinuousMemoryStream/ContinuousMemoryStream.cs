@@ -141,6 +141,8 @@ namespace JBe.IO
 
                     if (this.buffer.TryTake(out segment) == false)
                         return totalRead;
+                    
+                    readIndex = segment.Index;
                 }
 
                 if (totalRead == count || offset + totalRead > buffer.Length - 1)
