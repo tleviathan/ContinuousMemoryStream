@@ -6,10 +6,11 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace JBe.IO
 {
-    public sealed class ConutinuousMemoryStream : Stream
+    public sealed class ContinuousMemoryStream : Stream
     {
         private const int DefaultBufferCount = 64;
         private const int DefaultBufferSize = 65536;
@@ -22,12 +23,12 @@ namespace JBe.IO
         private readonly BufferPool<byte> bufferPool;
         BufferSegment<byte> segment;
 
-        public ConutinuousMemoryStream()
+        public ContinuousMemoryStream()
             : this(DefaultBufferCount, DefaultBufferSize)
         {
         }
 
-        public ConutinuousMemoryStream(int bufferCount, int bufferSize)
+        public ContinuousMemoryStream(int bufferCount, int bufferSize)
         {
             canRead = true;
             canSeek = false;
@@ -60,28 +61,43 @@ namespace JBe.IO
                         return 0;
                 }
 
-            Debug.Assert(segment != null, "segment != null");
-            int allowdCount = Math.Min(count, segment.Count);
-            segment.Count -= allowdCount;
-            Buffer.BlockCopy(segment.Owner.MainBuffer, segment.Index, buffer, offset, allowdCount);
-            if (allowdCount == segment.Count)
+            int totalRead = 0;
+            do
             {
-                segment.Free();
-                segment = null;
-            }
-            return allowdCount;
+                Debug.Assert(segment != null, "segment != null");
+                int allowdCount = Math.Min(count, segment.Count);
+                Buffer.BlockCopy(segment.Owner.MainBuffer, segment.Index, buffer, totalRead, allowdCount);
+                segment.Count -= allowdCount;
+                totalRead += allowdCount;
+                if (segment.Count == 0)
+                {
+                    segment.Free();
+                    segment = null;
+
+                    if (this.buffer.TryTake(out segment) == false)
+                        return totalRead;
+                }
+                
+                if (totalRead == count)
+                    return totalRead;
+
+            } while (true);
+
+            return totalRead;
         }
 
         public override void Write(byte[] buffer, int offset, int count)
         {
             int rest = count;
+            int totalCopied = 0;
             do
             {
                 BufferSegment<byte> segment = bufferPool.GetSegment();
                 var allowdCount = Math.Min(rest, segment.Length);
                 rest -= allowdCount;
-                Buffer.BlockCopy(buffer, offset, segment.Owner.MainBuffer, segment.Index, allowdCount);
+                Buffer.BlockCopy(buffer, totalCopied, segment.Owner.MainBuffer, segment.Index, allowdCount);
                 segment.Count = allowdCount;
+                totalCopied += allowdCount;
                 this.buffer.Add(segment);
             } while (rest > 0);
         }
@@ -110,6 +126,11 @@ namespace JBe.IO
         {
             get { throw new NotSupportedException(); }
             set { throw new NotSupportedException(); }
+        }
+
+        public void SetEndOfStream()
+        {
+            buffer.CompleteAdding();
         }
     }
 }
