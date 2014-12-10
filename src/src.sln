@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConutinuousMemoryStream", "ConutinuousMemoryStream\ConutinuousMemoryStream.csproj", "{AA901E80-BDBB-4523-8F35-EA77E4FDED8C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContinuousMemoryStream", "ContinuousMemoryStream\ContinuousMemoryStream.csproj", "{AA901E80-BDBB-4523-8F35-EA77E4FDED8C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

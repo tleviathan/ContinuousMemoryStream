@@ -35,7 +35,7 @@
   <ItemGroup>
     <Compile Include="BufferPool.cs" />
     <Compile Include="BufferSegment.cs" />
-    <Compile Include="ConutinuousMemoryStream.cs" />
+    <Compile Include="ContinuousMemoryStream.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
