@@ -18,10 +18,9 @@ namespace JBe.IO.Tests
         [Fact]
         public void OneTreadWritesOneTreadReadsAllWritenData()
         {
-
             string receivedData = "";
 
-            ContinuousMemoryStream stream = new ContinuousMemoryStream(2, 2);
+            ContinuousMemoryStream stream = new ContinuousMemoryStream(128, 64);
 
             int writtentotal = 0;
             int readtotal = 0;
@@ -30,14 +29,14 @@ namespace JBe.IO.Tests
                 var bytes = Encoding.UTF8.GetBytes(data);
                 stream.Write(bytes, 0, bytes.Length);
                 writtentotal = bytes.Length;
-                stream.SetEndOfStream();
+                stream.Dispose();
             });
             writeThread.Start();
 
             readThread = new Thread(() =>
             {
                 int read;
-                byte[] buffer = new byte[64];
+                byte[] buffer = new byte[2];
                 List<byte> bytesList = new List<byte>();
 
                 do

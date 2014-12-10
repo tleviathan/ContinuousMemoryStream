@@ -22,6 +22,7 @@ namespace JBe.IO
         private readonly BlockingCollection<BufferSegment<byte>> buffer;
         private readonly BufferPool<byte> bufferPool;
         BufferSegment<byte> segment;
+        private int readIndex;
 
         public ContinuousMemoryStream()
             : this(DefaultBufferCount, DefaultBufferSize)
@@ -54,36 +55,20 @@ namespace JBe.IO
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (segment == null)
-                while (this.buffer.TryTake(out segment, 1000) == false)
-                {
-                    if (this.buffer.IsCompleted)
-                        return 0;
-                }
-
-            int totalRead = 0;
-            do
+            if (this.segment != null)
             {
-                Debug.Assert(segment != null, "segment != null");
-                int allowdCount = Math.Min(count, segment.Count);
-                Buffer.BlockCopy(segment.Owner.MainBuffer, segment.Index, buffer, totalRead, allowdCount);
-                segment.Count -= allowdCount;
-                totalRead += allowdCount;
-                if (segment.Count == 0)
-                {
-                    segment.Free();
-                    segment = null;
+                return ReadInternal(buffer, offset, count);
+            }
 
-                    if (this.buffer.TryTake(out segment) == false)
-                        return totalRead;
-                }
-                
-                if (totalRead == count)
-                    return totalRead;
+            foreach (BufferSegment<byte> bufferSegment in this.buffer.GetConsumingEnumerable())
+            {
+                this.segment = bufferSegment;
+                this.readIndex = segment.Index;
 
-            } while (true);
+                return ReadInternal(buffer, offset, count);
+            }
 
-            return totalRead;
+            return 0;
         }
 
         public override void Write(byte[] buffer, int offset, int count)
@@ -131,6 +116,36 @@ namespace JBe.IO
         public void SetEndOfStream()
         {
             buffer.CompleteAdding();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            SetEndOfStream();
+        }
+
+        private int ReadInternal(byte[] buffer, int offset, int count)
+        {
+            int totalRead = 0;
+            do
+            {
+                Debug.Assert(segment != null, "segment != null");
+                int allowdCount = Math.Min(count, segment.Count);
+                Buffer.BlockCopy(segment.Owner.MainBuffer, readIndex, buffer, offset + totalRead, allowdCount);
+                segment.Count -= allowdCount;
+                totalRead += allowdCount;
+                readIndex += allowdCount;
+                if (segment.Count == 0)
+                {
+                    segment.Free();
+                    segment = null;
+
+                    if (this.buffer.TryTake(out segment) == false)
+                        return totalRead;
+                }
+
+                if (totalRead == count || offset + totalRead > buffer.Length - 1)
+                    return totalRead;
+            } while (true);
         }
     }
 }
